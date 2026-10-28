@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-  <!-- MINDTRAP: LOGIC CORE Analytics -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MINDTRAP: LOGIC CORE</title>
+<!-- Google Analytics: MINDTRAP: LOGIC CORE -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-VBPV3BFYEN"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -8,10 +12,6 @@
   gtag('js', new Date());
   gtag('config', 'G-VBPV3BFYEN');
 </script>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MINDTRAP: LOGIC CORE</title>
 <style>
 :root{--bg:#080b14;--panel:#111827;--panel2:#172033;--line:#29354c;--text:#eef4ff;--muted:#9aa9c2;--cyan:#5ee7ff;--purple:#9c7bff;--green:#6df2a4;--red:#ff7188;--gold:#ffd36e}
 *{box-sizing:border-box}
@@ -136,6 +136,14 @@ h1{font-size:clamp(23px,6vw,34px);line-height:1.15;margin:22px 0 10px;letter-spa
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
+
+// Send anonymous gameplay events to Google Analytics.
+// Do not send player names, email addresses, answers, or other personal data.
+function trackGameEvent(eventName, details={}) {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", eventName, details);
+  }
+}
 const puzzles = [
 {t:"The even-step sequence",d:"STARTER",p:"Find the number that continues this pattern.",s:"2 · 4 · 6 · 8 · ?",a:["10"],h:"Add 2 each time."},
 {t:"Double trouble",d:"STARTER",p:"What number comes next?",s:"3 · 6 · 12 · 24 · ?",a:["48"],h:"Multiply by 2 each time."},
@@ -206,7 +214,7 @@ function accepted(p,v){const n=norm(v);return p.a.some(a=>norm(a)===n)}
 function showToast(s){$("toast").textContent=s;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
 function tone(freq=650,duration=.09,type="sine"){if(!soundOn)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.055,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+duration);o.onended=()=>c.close()}catch(e){}}
 function saveGame(){try{localStorage.setItem(KEY,String(bestScore));localStorage.setItem(SAVE,JSON.stringify({level,unlocked,best:bestScore,score,lives,streak,hints,sessionSolved,started}));localStorage.setItem(BADGE_KEY,JSON.stringify(earnedBadges))}catch(e){}}
-function awardBadge(id){if(earnedBadges.includes(id))return;const b=badgeList.find(x=>x.id===id);if(!b)return;earnedBadges.push(id);try{localStorage.setItem(BADGE_KEY,JSON.stringify(earnedBadges))}catch(e){}showToast(`${b.icon} Badge unlocked: ${b.name}!`);tone(950,.16)}
+function awardBadge(id){if(earnedBadges.includes(id))return;const b=badgeList.find(x=>x.id===id);if(!b)return;earnedBadges.push(id);trackGameEvent("achievement_unlocked",{achievement_id:id,achievement_name:b.name});try{localStorage.setItem(BADGE_KEY,JSON.stringify(earnedBadges))}catch(e){}showToast(`${b.icon} Badge unlocked: ${b.name}!`);tone(950,.16)}
 function checkBadges(){if(sessionSolved>=1)awardBadge("first");if(streak>=5)awardBadge("streak5");if(score>=100)awardBadge("score100");if(unlocked>=10)awardBadge("level10");saveGame()}
 function buildBadges(){const g=$("badgeGrid");g.innerHTML="";for(const b of badgeList){const got=earnedBadges.includes(b.id);const el=document.createElement("div");el.style.cssText=`border:1px solid ${got?'#ffd36e':'#29354c'};background:${got?'#2b2618':'#101827'};border-radius:13px;padding:12px;opacity:${got?'1':'.55'}`;el.innerHTML=`<div style="font-size:26px">${got?b.icon:'🔒'}</div><strong style="display:block;margin:5px 0">${b.name}</strong><small style="color:#b7c5dd;line-height:1.4">${b.desc}</small><div style="font-size:10px;margin-top:7px;color:${got?'#ffd36e':'#9aa9c2'}">${got?'UNLOCKED':'LOCKED'}</div>`;g.appendChild(el)}$("badgeCount").textContent=`${earnedBadges.length} of ${badgeList.length} badges unlocked`;}
 
@@ -216,6 +224,7 @@ function begin(fromSave=false){
   $("welcomeScreen").classList.remove("show");
   $("endScreen").classList.remove("show");
   started=true;
+  trackGameEvent("game_session_started",{resume_saved_game:!!(fromSave && save.started)});
   if(fromSave && save.started){
     level=Math.min(unlocked-1,Math.max(0,save.level||0));
     score=save.score||0;
@@ -232,12 +241,15 @@ function begin(fromSave=false){
 }
 function startTimer(){}
 function mistake(message){if(answered)return;answered=true;stopTimer();lives=Math.max(0,lives-1);streak=0;tone(170,.18,"sawtooth");$("feedback").className="bad";$("feedback").textContent=message+" Life lost. Tap Next challenge to continue."; $("gameCard").classList.remove("shake");void $("gameCard").offsetWidth;$("gameCard").classList.add("shake");$("answer").disabled=true;$("submitBtn").disabled=true;saveGame();if(lives===0){setTimeout(()=>endGame(false),650)}else{$("actionsNext")?.remove();const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent="NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b)}}
-function correct(){if(answered)return;answered=true;stopTimer();sessionSolved++;streak++;const bonus=Math.min(10,(streak-1)*2);const points=10+bonus;score+=points;if(score>bestScore){bestScore=score;localStorage.setItem(KEY,String(bestScore))}unlocked=Math.max(unlocked,Math.min(50,level+2));checkBadges();tone(820,.1);setTimeout(()=>tone(1050,.12),90);$("score").textContent=score;$("best").textContent=bestScore;$("feedback").className="good";$("feedback").textContent=`Correct! +${points} points${bonus?` (includes +${bonus} streak bonus)`:""}. Streak: ${streak}.`;$("gameCard").classList.remove("pulse");void $("gameCard").offsetWidth;$("gameCard").classList.add("pulse");$("answer").disabled=true;$("submitBtn").disabled=true;const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent=level===49?"FINISH CORE ✓":"NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b);saveGame()}
+function correct(){if(answered)return;answered=true;stopTimer();sessionSolved++;trackGameEvent("puzzle_solved",{level_number:level+1,session_solved_count:sessionSolved});streak++;const bonus=Math.min(10,(streak-1)*2);const points=10+bonus;score+=points;if(score>bestScore){bestScore=score;localStorage.setItem(KEY,String(bestScore))}unlocked=Math.max(unlocked,Math.min(50,level+2));checkBadges();tone(820,.1);setTimeout(()=>tone(1050,.12),90);$("score").textContent=score;$("best").textContent=bestScore;$("feedback").className="good";$("feedback").textContent=`Correct! +${points} points${bonus?` (includes +${bonus} streak bonus)`:""}. Streak: ${streak}.`;$("gameCard").classList.remove("pulse");void $("gameCard").offsetWidth;$("gameCard").classList.add("pulse");$("answer").disabled=true;$("submitBtn").disabled=true;const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent=level===49?"FINISH CORE ✓":"NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b);saveGame()}
 function nextChallenge(){const b=$("actionsNext");if(b)b.remove();if(level>=49){endGame(true);return}level++;render();startTimer();$("answer").focus()}
-function submitAnswer(e){e.preventDefault();if(!started||answered)return;const value=$("answer").value;if(!value.trim())return; if(accepted(puzzles[level],value)){correct()}else{mistake("Not quite. Try again on your next run.")}}
+function submitAnswer(e){e.preventDefault();if(!started||answered)return;const value=$("answer").value;if(!value.trim())return;
+  const isCorrect=accepted(puzzles[level],value);
+  trackGameEvent("puzzle_attempt",{level_number:level+1,is_correct:isCorrect});
+  if(isCorrect){correct()}else{mistake("Not quite. Try again on your next run.")}}
 function useHint(){if(!started||answered)return;if(hints<=0){showToast("No hints left this run.");return}hints--;const p=puzzles[level];$("feedback").className="info";$("feedback").textContent="Hint: "+p.h;tone(480,.08);$("hintBtn").textContent=`💡 Hint (${hints})`;saveGame()}
 function skip(){if(!started||answered)return;if(lives<=1){mistake("Skipped. The answer was: "+puzzles[level].a[0]+".");return}lives--;streak=0;answered=true;stopTimer();$("feedback").className="info";$("feedback").textContent="Skipped. The answer was: "+puzzles[level].a[0]+". One life lost.";const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent="NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b);$("answer").disabled=true;$("submitBtn").disabled=true;$("lives").textContent="♥".repeat(lives)+"♡".repeat(3-lives);saveGame()}
-function endGame(won){stopTimer();started=false;if(won)awardBadge("perfect");saveGame();$("endScreen").classList.add("show");$("endTag").textContent=won?"CORE CLEARED":"RUN OVER";$("endTitle").textContent=won?"You beat the Logic Core!":"Out of lives";$("endText").textContent=won?"All 50 challenges solved. That is serious logic power.":"You solved "+sessionSolved+" challenge(s) this run. Take a breath and try a new strategy."; $("endStats").textContent=`Score: ${score} · Personal best: ${bestScore} · Best streak this run: ${streak} · Unlocked through level ${unlocked}`;saveGame()}
+function endGame(won){stopTimer();started=false;trackGameEvent(won?"game_session_completed":"game_session_failed",{score:score,puzzles_solved:sessionSolved,highest_unlocked_level:unlocked});if(won)awardBadge("perfect");saveGame();$("endScreen").classList.add("show");$("endTag").textContent=won?"CORE CLEARED":"RUN OVER";$("endTitle").textContent=won?"You beat the Logic Core!":"Out of lives";$("endText").textContent=won?"All 50 challenges solved. That is serious logic power.":"You solved "+sessionSolved+" challenge(s) this run. Take a breath and try a new strategy."; $("endStats").textContent=`Score: ${score} · Personal best: ${bestScore} · Best streak this run: ${streak} · Unlocked through level ${unlocked}`;saveGame()}
 function buildLevels(){const g=$("levelGrid");g.innerHTML="";for(let i=0;i<50;i++){const b=document.createElement("button");b.className="level-cell"+(i+1>unlocked?" locked":"")+(i===level?" current":"");b.textContent=i+1>unlocked?"🔒":i+1;b.disabled=i+1>unlocked;b.onclick=()=>{level=i;$("levelsScreen").classList.remove("show");if(!started){started=true;score=0;lives=3;streak=0;hints=3;sessionSolved=0;$("welcomeScreen").classList.remove("show")}const old=$("actionsNext");if(old)old.remove();render();startTimer()};g.appendChild(b)}}
 $("answerForm").addEventListener("submit",submitAnswer);
 $("hintBtn").addEventListener("click",useHint);
@@ -256,4 +268,4 @@ $("welcomeBest").textContent="Personal best: "+bestScore;
 $("best").textContent=bestScore;
 </script>
 </body>
-</html>
+  </html>
