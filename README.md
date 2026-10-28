@@ -1,1 +1,0 @@
-# Mindtrap-logic-core-
