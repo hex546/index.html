@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MINDTRAP: LOGIC CORE</title>
+<style>
+:root{--bg:#080b14;--panel:#111827;--panel2:#172033;--line:#29354c;--text:#eef4ff;--muted:#9aa9c2;--cyan:#5ee7ff;--purple:#9c7bff;--green:#6df2a4;--red:#ff7188;--gold:#ffd36e}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#19213d 0%,#0b1020 42%,var(--bg) 78%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{width:min(760px,100%);margin:auto;padding:18px 14px 28px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:5px 0 18px}
+.brand{font-weight:950;letter-spacing:1.5px;font-size:clamp(18px,5vw,26px);line-height:1.1}
+.brand span{color:var(--cyan)}
+.tag{font-size:10px;letter-spacing:3px;color:var(--muted);margin-top:5px}
+.icon-btn{border:1px solid var(--line);background:#121a2c;color:var(--text);border-radius:12px;padding:10px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}
+.stat{background:linear-gradient(145deg,#151e31,#0f1524);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;min-width:0}
+.stat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.stat strong{display:block;font-size:clamp(17px,4.6vw,23px);margin-top:3px}
+#lives{color:var(--red)} #streak{color:var(--green)}
+.progress-wrap{height:6px;background:#202a3d;border-radius:99px;overflow:hidden;margin:10px 2px 18px}
+#progress{height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width .35s ease}
+.card{position:relative;overflow:hidden;background:linear-gradient(160deg,rgba(22,31,51,.97),rgba(12,18,32,.98));border:1px solid #2a3751;border-radius:24px;padding:clamp(18px,5vw,30px);box-shadow:0 18px 50px #0005}
+.card:before{content:"";position:absolute;top:-70px;right:-60px;width:180px;height:180px;background:#5ee7ff0c;border-radius:50%;pointer-events:none}
+.level-row{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.4px}
+.pill{border:1px solid #374564;background:#18233a;padding:6px 9px;border-radius:99px;white-space:nowrap}
+#difficulty{color:var(--cyan)}
+h1{font-size:clamp(23px,6vw,34px);line-height:1.15;margin:22px 0 10px;letter-spacing:-.6px}
+#prompt{color:#c4d0e6;line-height:1.65;font-size:15px;white-space:pre-line}
+.sequence{margin:20px 0;padding:16px 10px;border-radius:16px;border:1px solid #30405d;background:#0a1020;text-align:center;color:var(--cyan);font-size:clamp(19px,5vw,29px);font-weight:850;letter-spacing:1px;overflow-wrap:anywhere}
+.answer-row{display:flex;gap:9px;margin-top:17px}
+#answer{width:100%;min-width:0;background:#090f1d;border:1px solid #3b4965;border-radius:13px;padding:14px;color:white;outline:none}
+#answer:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #5ee7ff18}
+.primary{border:0;border-radius:13px;padding:13px 17px;font-weight:850;color:#07111b;background:linear-gradient(110deg,var(--cyan),#8bb8ff);box-shadow:0 7px 20px #5ee7ff18}
+.secondary{border:1px solid #33415b;background:#172239;color:var(--text);border-radius:12px;padding:11px 12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions button{flex:1;min-width:90px}
+#feedback{min-height:26px;margin-top:13px;font-size:13px;color:var(--muted);line-height:1.45}
+#feedback.good{color:var(--green)}#feedback.bad{color:var(--red)}#feedback.info{color:var(--gold)}
+.footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#7787a2;font-size:11px;margin:14px 4px}
+.screen{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:18px;background:#050811eF;backdrop-filter:blur(10px)}
+.screen.show{display:flex}
+.modal{width:min(500px,100%);max-height:90vh;overflow:auto;background:linear-gradient(150deg,#18223a,#0c1221);border:1px solid #354563;border-radius:24px;padding:25px;text-align:center;box-shadow:0 25px 80px #0009;animation:pop .25s ease}
+.modal h2{font-size:clamp(25px,7vw,36px);margin:7px 0 10px}
+.modal p{color:#b7c5dd;line-height:1.6}
+.modal .primary{width:100%;margin-top:10px}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:18px 0}
+.level-cell{border:1px solid #33415b;background:#101a2d;color:#dbe7ff;border-radius:10px;padding:10px 0}
+.level-cell.locked{opacity:.35}
+.level-cell.current{border-color:var(--cyan);color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:30;background:#202c43;border:1px solid #405274;border-radius:12px;padding:11px 16px;max-width:90%;text-align:center;font-size:13px;transition:.25s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.pulse{animation:pulse .35s ease}.shake{animation:shake .28s ease}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes pulse{50%{transform:scale(1.015);border-color:var(--green)}}
+@keyframes shake{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+@media(max-width:390px){.stats{gap:5px}.stat{padding:9px 4px}.stat small{font-size:9px}.answer-row{flex-direction:column}.answer-row .primary{width:100%}.app{padding:13px 10px 22px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div><div class="brand">MINDTRAP<span>:</span> LOGIC CORE</div><div class="tag">THINK SHARPER · GO FURTHER</div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="icon-btn" id="badgesBtn" aria-label="View achievements">BADGES 🏅</button><button class="icon-btn" id="levelsBtn" aria-label="Choose level">LEVELS ▦</button></div>
+  </header>
+  <div class="stats">
+    <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+    <div class="stat"><small>Best score</small><strong id="best">0</strong></div>
+    <div class="stat"><small>Lives</small><strong id="lives">♥♥♥</strong></div>
+  </div>
+  <div class="progress-wrap"><div id="progress"></div></div>
+  <main class="card" id="gameCard">
+    <div class="level-row"><span id="levelLabel">CHALLENGE 01 / 50</span><span class="pill" id="difficulty">STARTER</span></div>
+    <h1 id="title">Wake up your logic.</h1>
+    <div id="prompt">Find the pattern, solve the puzzle, and climb the Logic Core.</div>
+    <div class="sequence" id="sequence">2 · 4 · 6 · 8 · ?</div>
+    <form id="answerForm">
+      <div class="answer-row"><input id="answer" type="text" autocomplete="off" placeholder="Type your answer…" aria-label="Your answer" required><button class="primary" id="submitBtn" type="submit">LOCK IN ↗</button></div>
+    </form>
+    <div class="actions">
+      <button class="secondary" id="hintBtn" type="button">💡 Hint (3)</button>
+      <button class="secondary" id="skipBtn" type="button">Skip −1 life</button>
+      <button class="secondary" id="soundBtn" type="button">🔊 Sound on</button>
+    </div>
+    <div id="feedback" role="status">You have 3 lives. Correct answers earn points; mistakes cost a life.</div>
+  </main>
+  <div class="footer"><span id="saveStatus">Progress saved on this device</span><span>50 challenges · No timer · Offline friendly</span></div>
+</div>
+
+<div class="screen show" id="welcomeScreen">
+  <div class="modal">
+    <div class="tag">WELCOME TO THE CORE</div>
+    <h2>MINDTRAP<span style="color:var(--cyan)">:</span><br>LOGIC CORE</h2>
+    <p>Fifty number and logic challenges. Build streaks, protect your lives, earn badges, and unlock new levels. Your progress is saved in this browser.</p>
+    <p id="welcomeBest">Personal best: 0</p>
+    <button class="primary" id="startBtn">ENTER THE CORE</button>
+    <button class="secondary" id="continueBtn" style="width:100%;margin-top:9px">CONTINUE SAVED GAME</button>
+  </div>
+</div>
+<div class="screen" id="badgesScreen">
+  <div class="modal">
+    <div class="level-row"><span>ACHIEVEMENTS</span><button class="icon-btn" id="closeBadges">✕</button></div>
+    <h2>Badge collection 🏅</h2><p>Earn badges by solving puzzles and reaching milestones. Locked badges stay dim until you earn them.</p>
+    <div id="badgeGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;text-align:left;margin:18px 0"></div>
+    <p id="badgeCount"></p>
+  </div>
+</div>
+<div class="screen" id="levelsScreen">
+  <div class="modal">
+    <div class="level-row"><span>LEVEL SELECT</span><button class="icon-btn" id="closeLevels">✕</button></div>
+    <h2>Choose your challenge</h2><p>Only unlocked levels can be selected.</p>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+</div>
+<div class="screen" id="endScreen">
+  <div class="modal">
+    <div class="tag" id="endTag">SESSION COMPLETE</div><h2 id="endTitle">Core cleared!</h2>
+    <p id="endText"></p><p id="endStats"></p>
+    <button class="primary" id="retryBtn">PLAY AGAIN</button>
+    <button class="secondary" id="endLevelsBtn" style="width:100%;margin-top:9px">CHOOSE LEVEL</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const puzzles = [
+{t:"The even-step sequence",d:"STARTER",p:"Find the number that continues this pattern.",s:"2 · 4 · 6 · 8 · ?",a:["10"],h:"Add 2 each time."},
+{t:"Double trouble",d:"STARTER",p:"What number comes next?",s:"3 · 6 · 12 · 24 · ?",a:["48"],h:"Multiply by 2 each time."},
+{t:"A shrinking gap",d:"STARTER",p:"Find the next number.",s:"20 · 18 · 16 · 14 · ?",a:["12"],h:"Subtract 2 each time."},
+{t:"Square one",d:"STARTER",p:"Which number completes the pattern?",s:"1 · 4 · 9 · 16 · ?",a:["25"],h:"These are 1², 2², 3², 4²…" },
+{t:"The odd one out",d:"STARTER",p:"Which number does not belong with the others?",s:"3 · 5 · 7 · 9 · 11",a:["9","nine"],h:"All the others are prime numbers."},
+{t:"Halfway there",d:"STARTER",p:"Continue the sequence.",s:"5 · 10 · 7.5 · 15 · 11.25 · ?",a:["22.5"],h:"Alternate ×2 and ÷2."},
+{t:"Add the gaps",d:"STARTER",p:"What is the next number?",s:"1 · 2 · 4 · 7 · 11 · ?",a:["16"],h:"The gaps are +1, +2, +3, +4…" },
+{t:"Count the corners",d:"STARTER",p:"A triangle has 3 corners and a square has 4. How many corners do 3 squares have altogether?",s:"3 squares × 4 corners",a:["12"],h:"Each square has 4 corners."},
+{t:"Reverse it",d:"STARTER",p:"Reverse the digits of 431. What number do you get?",s:"431 → ?",a:["134"],h:"Read the digits from right to left."},
+{t:"Quick logic",d:"STARTER",p:"Two fathers and two sons share 3 oranges equally, one orange per person. How many people are there?",s:"2 fathers + 2 sons = ?",a:["3","three"],h:"A grandfather, his son, and his grandson can be both fathers and sons."},
+{t:"Three-step climb",d:"BUILDER",p:"Find the next term.",s:"4 · 7 · 13 · 25 · 49 · ?",a:["97"],h:"Each term is ×2, then subtract 1."},
+{t:"Cube numbers",d:"BUILDER",p:"What comes next?",s:"1 · 8 · 27 · 64 · ?",a:["125"],h:"These are 1³, 2³, 3³, 4³…" },
+{t:"Missing difference",d:"BUILDER",p:"Continue the pattern.",s:"2 · 5 · 10 · 17 · 26 · ?",a:["37"],h:"Add consecutive odd numbers: +3, +5, +7, +9…" },
+{t:"Fibonacci door",d:"BUILDER",p:"Each number is the sum of the previous two. Find the next.",s:"2 · 3 · 5 · 8 · 13 · ?",a:["21"],h:"Add 8 and 13."},
+{t:"Number machine",d:"BUILDER",p:"The same rule changes each input to its output. What is the missing output?",s:"2 → 6   |   4 → 12   |   7 → ?",a:["21"],h:"Multiply each input by 3."},
+{t:"A neat square",d:"BUILDER",p:"Find the missing number.",s:"2 · 6 · 12 · 20 · 30 · ?",a:["42"],h:"These are 1×2, 2×3, 3×4, 4×5, 5×6…" },
+{t:"Clock thinking",d:"BUILDER",p:"A clock shows 3:00. What is the smaller angle between the hands?",s:"3:00",a:["90","90 degrees","90°"],h:"At 3:00, the hands point to 12 and 3."},
+{t:"Digit total",d:"BUILDER",p:"What is the sum of the digits in 8,407?",s:"8 + 4 + 0 + 7",a:["19"],h:"Add 8 + 4 + 0 + 7."},
+{t:"The missing middle",d:"BUILDER",p:"Find the missing number.",s:"3 · 9 · 27 · ? · 243",a:["81"],h:"Multiply by 3 each time."},
+{t:"Word logic",d:"BUILDER",p:"What appears once in 'minute', twice in 'moment', but never in 'a thousand years'?",s:"Think about letters, not time.",a:["m","the letter m"],h:"Look for a letter that appears in the words."},
+{t:"Two rules",d:"THINKER",p:"What number comes next?",s:"2 · 3 · 5 · 8 · 12 · 17 · ?",a:["23"],h:"The gaps increase: +1, +2, +3, +4, +5…" },
+{t:"Prime trail",d:"THINKER",p:"Find the next prime number after 19.",s:"11 · 13 · 17 · 19 · ?",a:["23"],h:"A prime number has exactly two positive factors."},
+{t:"Multiply then add",d:"THINKER",p:"Find the next number.",s:"3 · 7 · 15 · 31 · 63 · ?",a:["127"],h:"Multiply by 2, then add 1."},
+{t:"The missing square",d:"THINKER",p:"Which number completes the sequence?",s:"4 · 9 · 16 · 25 · ? · 49",a:["36"],h:"They are squares of consecutive integers."},
+{t:"Family puzzle",d:"THINKER",p:"A girl has as many brothers as sisters. Each brother has half as many brothers as sisters. How many boys and girls are in the family?",s:"Answer as boys,girls (example: 2,3)",a:["3,4","3 boys, 4 girls"],h:"If there are 3 boys, each boy has 2 brothers. Try 4 girls."},
+{t:"Reverse operation",d:"THINKER",p:"A number is doubled, then 9 is added, giving 31. What was the original number?",s:"2x + 9 = 31",a:["11"],h:"Subtract 9 first, then divide by 2."},
+{t:"Number pyramid",d:"THINKER",p:"Each upper number is the sum of the two directly below it. Bottom row: 4, 7, 2. What is the top number?",s:"Bottom: 4 · 7 · 2",a:["20"],h:"Middle row is 11 and 9. Add them."},
+{t:"Alternating pattern",d:"THINKER",p:"Find the next number.",s:"2 · 10 · 4 · 20 · 6 · 30 · ?",a:["8"],h:"Odd positions: 2, 4, 6… Even positions: 10, 20, 30."},
+{t:"How many handshakes?",d:"THINKER",p:"Four friends each shake hands with every other friend once. How many handshakes happen?",s:"Each pair shakes once.",a:["6"],h:"Count the pairs: AB, AC, AD, BC, BD, CD."},
+{t:"The three-digit code",d:"THINKER",p:"The digits add to 9. The first digit is twice the last. The middle digit is 3. What is the code?",s:"_ · 3 · _",a:["432"],h:"First + 3 + last = 9, and first = 2×last."},
+{t:"Growing gaps",d:"EXPERT",p:"Continue the sequence.",s:"1 · 3 · 7 · 15 · 31 · ?",a:["63"],h:"Each number is doubled, then 1 is added."},
+{t:"Factorial trail",d:"EXPERT",p:"What comes next?",s:"1 · 2 · 6 · 24 · 120 · ?",a:["720"],h:"Multiply by 2, then 3, then 4, then 5…" },
+{t:"The 100 doors",d:"EXPERT",p:"In the classic 100-door puzzle, which numbered doors remain open after toggling every door on each matching-numbered pass?",s:"Doors are numbered 1 to 100.",a:["perfect squares","squares","1,4,9,16,25,36,49,64,81,100"],h:"A door is toggled an odd number of times only when its number has an odd number of divisors."},
+{t:"Digit pattern",d:"EXPERT",p:"Find the next number.",s:"12 · 21 · 13 · 31 · 14 · ?",a:["41"],h:"The digits swap; the first digit increases by 1 before swapping."},
+{t:"Solve the rule",d:"EXPERT",p:"If 2 ☆ 3 = 13 and 3 ☆ 4 = 25, using the same rule, what is 4 ☆ 5?",s:"2 ☆ 3 = 2² + 3²",a:["41"],h:"Square both numbers and add them."},
+{t:"Work-rate logic",d:"EXPERT",p:"If 5 machines make 5 widgets in 5 minutes, how many minutes do 100 identical machines take to make 100 widgets?",s:"All machines work at the same rate.",a:["5","5 minutes"],h:"Each machine makes one widget in five minutes."},
+{t:"The number of letters",d:"EXPERT",p:"What number comes next if each word is matched to its number of letters?",s:"ONE=3 · TWO=3 · THREE=5 · FOUR=4 · FIVE=?",a:["4"],h:"Count the letters in the word FIVE."},
+{t:"Three consecutive numbers",d:"EXPERT",p:"Three consecutive whole numbers add up to 72. What is the largest?",s:"n + (n+1) + (n+2) = 72",a:["25"],h:"The middle number is 72 ÷ 3."},
+{t:"The missing multiplier",d:"EXPERT",p:"Find the missing value.",s:"2, 6, 18, 54, ?",a:["162"],h:"Multiply by 3 each time."},
+{t:"Logic truth",d:"EXPERT",p:"All Zorbs are blue. Some blue things are round. Must some Zorbs be round?",s:"Answer YES or NO.",a:["no","nope"],h:"The round blue things might be blue things that are not Zorbs."},
+{t:"Advanced difference",d:"MASTER",p:"Find the next term.",s:"2 · 6 · 12 · 20 · 30 · 42 · ?",a:["56"],h:"The terms are n×(n+1)." },
+{t:"Two-digit mystery",d:"MASTER",p:"A two-digit number has digits that add to 11. Reversing its digits makes it 27 larger. What is the original number?",s:"_ _",a:["47"],h:"The reversed number is 27 larger, so the tens digit is 3 less than the units digit."},
+{t:"Probability check",d:"MASTER",p:"A fair six-sided die is rolled once. What is the probability of rolling an even number? Answer as a simplified fraction.",s:"Even outcomes: 2, 4, 6",a:["1/2"],h:"Three of the six outcomes are even."},
+{t:"A sequence of primes",d:"MASTER",p:"Add the next prime number to 20. What is the result?",s:"20 + next prime after 11",a:["33"],h:"The next prime after 11 is 13."},
+{t:"The hidden operation",d:"MASTER",p:"If 1→2, 2→6, 3→12, 4→20, then 9→?",s:"Find the rule.",a:["90"],h:"Multiply each number by the next integer."},
+{t:"Bridge and torch logic",d:"MASTER",p:"Four people cross a bridge in 1, 2, 7, and 10 minutes. One torch is needed; at most two cross together, moving at the slower person's speed. What is the minimum total time?",s:"Answer in minutes.",a:["17","17 minutes"],h:"Send the two fastest together; use the fastest to shuttle the torch."},
+{t:"The missing number",d:"MASTER",p:"Find the missing number.",s:"8 · 5 · 4 · 9 · 1 · 7 · ?",a:["6"],h:"These are the digits in the written number sequence? Think of the digits 0–9 in alphabetical order."},
+{t:"Perfect-number clue",d:"MASTER",p:"What is the smallest positive integer equal to the sum of its proper positive divisors?",s:"Proper divisors exclude the number itself.",a:["6"],h:"Its proper divisors are 1, 2, and 3."},
+{t:"Final logic gate",d:"MASTER",p:"A code has three digits. The digits are distinct, add to 11, and multiply to 36. Give the digits in ascending order.",s:"_ · _ · _",a:["2,3,6","236","2 3 6"],h:"Try three distinct digits with product 36 and sum 11."}
+];
+const KEY="mindtrapBestScore", SAVE="mindtrapLogicSaveV2", BADGE_KEY="mindtrapBadgesV1";
+const badgeList=[
+{id:"first",icon:"🌱",name:"First Step",desc:"Solve your first challenge."},
+{id:"streak5",icon:"🔥",name:"On Fire",desc:"Reach a streak of 5 correct answers."},
+{id:"score100",icon:"💯",name:"Century Club",desc:"Earn 100 points in one run."},
+{id:"level10",icon:"🧭",name:"Deep Thinker",desc:"Unlock challenge 10."},
+{id:"perfect",icon:"👑",name:"Core Master",desc:"Complete all 50 challenges."}
+];
+let earnedBadges=[];try{earnedBadges=JSON.parse(localStorage.getItem(BADGE_KEY)||"[]");if(!Array.isArray(earnedBadges))earnedBadges=[]}catch(e){earnedBadges=[]}
+let score=0,bestScore=Number(localStorage.getItem(KEY)||0),level=0,unlocked=1,lives=3,streak=0,hints=3,timeLeft=30,timerId=null,started=false,soundOn=true,answered=false,sessionSolved=0;
+let save={};
+try{save=JSON.parse(localStorage.getItem(SAVE)||"{}")||{}}catch(e){save={}}
+if(save.best && save.best>bestScore){bestScore=save.best;localStorage.setItem(KEY,String(bestScore))}
+if(Number.isInteger(save.unlocked))unlocked=Math.max(1,Math.min(50,save.unlocked));
+function norm(v){return String(v).trim().toLowerCase().replace(/[.,°]/g,"").replace(/\s+/g," ")}
+function accepted(p,v){const n=norm(v);return p.a.some(a=>norm(a)===n)}
+function showToast(s){$("toast").textContent=s;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
+function tone(freq=650,duration=.09,type="sine"){if(!soundOn)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.055,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+duration);o.onended=()=>c.close()}catch(e){}}
+function saveGame(){try{localStorage.setItem(KEY,String(bestScore));localStorage.setItem(SAVE,JSON.stringify({level,unlocked,best:bestScore,score,lives,streak,hints,sessionSolved,started}));localStorage.setItem(BADGE_KEY,JSON.stringify(earnedBadges))}catch(e){}}
+function awardBadge(id){if(earnedBadges.includes(id))return;const b=badgeList.find(x=>x.id===id);if(!b)return;earnedBadges.push(id);try{localStorage.setItem(BADGE_KEY,JSON.stringify(earnedBadges))}catch(e){}showToast(`${b.icon} Badge unlocked: ${b.name}!`);tone(950,.16)}
+function checkBadges(){if(sessionSolved>=1)awardBadge("first");if(streak>=5)awardBadge("streak5");if(score>=100)awardBadge("score100");if(unlocked>=10)awardBadge("level10");saveGame()}
+function buildBadges(){const g=$("badgeGrid");g.innerHTML="";for(const b of badgeList){const got=earnedBadges.includes(b.id);const el=document.createElement("div");el.style.cssText=`border:1px solid ${got?'#ffd36e':'#29354c'};background:${got?'#2b2618':'#101827'};border-radius:13px;padding:12px;opacity:${got?'1':'.55'}`;el.innerHTML=`<div style="font-size:26px">${got?b.icon:'🔒'}</div><strong style="display:block;margin:5px 0">${b.name}</strong><small style="color:#b7c5dd;line-height:1.4">${b.desc}</small><div style="font-size:10px;margin-top:7px;color:${got?'#ffd36e':'#9aa9c2'}">${got?'UNLOCKED':'LOCKED'}</div>`;g.appendChild(el)}$("badgeCount").textContent=`${earnedBadges.length} of ${badgeList.length} badges unlocked`;}
+
+function render(){const p=puzzles[level];$("score").textContent=score;$("best").textContent=bestScore;$("lives").textContent="♥".repeat(lives)+"♡".repeat(3-lives);$("levelLabel").textContent=`CHALLENGE ${String(level+1).padStart(2,"0")} / ${puzzles.length}`;$("difficulty").textContent=p.d;$("title").textContent=p.t;$("prompt").textContent=p.p;$("sequence").textContent=p.s;$("progress").style.width=((level)/puzzles.length*100)+"%";$("hintBtn").textContent=`💡 Hint (${hints})`;$("answer").value="";$("answer").disabled=false;$("submitBtn").disabled=false;$("feedback").className="";$("feedback").textContent="Find the answer and protect your lives.";$("saveStatus").textContent=`Progress saved · Level ${unlocked} unlocked`;answered=false;saveGame()}
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
+function begin(fromSave=false){
+  $("welcomeScreen").classList.remove("show");
+  $("endScreen").classList.remove("show");
+  started=true;
+  if(fromSave && save.started){
+    level=Math.min(unlocked-1,Math.max(0,save.level||0));
+    score=save.score||0;
+    lives=save.lives||3;
+    streak=save.streak||0;
+    hints=save.hints??3;
+    sessionSolved=save.sessionSolved||0;
+  }else{
+    level=Math.min(unlocked-1,49);
+    score=0;lives=3;streak=0;hints=3;sessionSolved=0;
+  }
+  render();
+  $("answer").focus();
+}
+function startTimer(){}
+function mistake(message){if(answered)return;answered=true;stopTimer();lives=Math.max(0,lives-1);streak=0;tone(170,.18,"sawtooth");$("feedback").className="bad";$("feedback").textContent=message+" Life lost. Tap Next challenge to continue."; $("gameCard").classList.remove("shake");void $("gameCard").offsetWidth;$("gameCard").classList.add("shake");$("answer").disabled=true;$("submitBtn").disabled=true;saveGame();if(lives===0){setTimeout(()=>endGame(false),650)}else{$("actionsNext")?.remove();const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent="NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b)}}
+function correct(){if(answered)return;answered=true;stopTimer();sessionSolved++;streak++;const bonus=Math.min(10,(streak-1)*2);const points=10+bonus;score+=points;if(score>bestScore){bestScore=score;localStorage.setItem(KEY,String(bestScore))}unlocked=Math.max(unlocked,Math.min(50,level+2));checkBadges();tone(820,.1);setTimeout(()=>tone(1050,.12),90);$("score").textContent=score;$("best").textContent=bestScore;$("feedback").className="good";$("feedback").textContent=`Correct! +${points} points${bonus?` (includes +${bonus} streak bonus)`:""}. Streak: ${streak}.`;$("gameCard").classList.remove("pulse");void $("gameCard").offsetWidth;$("gameCard").classList.add("pulse");$("answer").disabled=true;$("submitBtn").disabled=true;const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent=level===49?"FINISH CORE ✓":"NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b);saveGame()}
+function nextChallenge(){const b=$("actionsNext");if(b)b.remove();if(level>=49){endGame(true);return}level++;render();startTimer();$("answer").focus()}
+function submitAnswer(e){e.preventDefault();if(!started||answered)return;const value=$("answer").value;if(!value.trim())return; if(accepted(puzzles[level],value)){correct()}else{mistake("Not quite. Try again on your next run.")}}
+function useHint(){if(!started||answered)return;if(hints<=0){showToast("No hints left this run.");return}hints--;const p=puzzles[level];$("feedback").className="info";$("feedback").textContent="Hint: "+p.h;tone(480,.08);$("hintBtn").textContent=`💡 Hint (${hints})`;saveGame()}
+function skip(){if(!started||answered)return;if(lives<=1){mistake("Skipped. The answer was: "+puzzles[level].a[0]+".");return}lives--;streak=0;answered=true;stopTimer();$("feedback").className="info";$("feedback").textContent="Skipped. The answer was: "+puzzles[level].a[0]+". One life lost.";const b=document.createElement("button");b.id="actionsNext";b.className="primary";b.textContent="NEXT CHALLENGE →";b.style.marginTop="10px";b.style.width="100%";b.onclick=nextChallenge;$("feedback").after(b);$("answer").disabled=true;$("submitBtn").disabled=true;$("lives").textContent="♥".repeat(lives)+"♡".repeat(3-lives);saveGame()}
+function endGame(won){stopTimer();started=false;if(won)awardBadge("perfect");saveGame();$("endScreen").classList.add("show");$("endTag").textContent=won?"CORE CLEARED":"RUN OVER";$("endTitle").textContent=won?"You beat the Logic Core!":"Out of lives";$("endText").textContent=won?"All 50 challenges solved. That is serious logic power.":"You solved "+sessionSolved+" challenge(s) this run. Take a breath and try a new strategy."; $("endStats").textContent=`Score: ${score} · Personal best: ${bestScore} · Best streak this run: ${streak} · Unlocked through level ${unlocked}`;saveGame()}
+function buildLevels(){const g=$("levelGrid");g.innerHTML="";for(let i=0;i<50;i++){const b=document.createElement("button");b.className="level-cell"+(i+1>unlocked?" locked":"")+(i===level?" current":"");b.textContent=i+1>unlocked?"🔒":i+1;b.disabled=i+1>unlocked;b.onclick=()=>{level=i;$("levelsScreen").classList.remove("show");if(!started){started=true;score=0;lives=3;streak=0;hints=3;sessionSolved=0;$("welcomeScreen").classList.remove("show")}const old=$("actionsNext");if(old)old.remove();render();startTimer()};g.appendChild(b)}}
+$("answerForm").addEventListener("submit",submitAnswer);
+$("hintBtn").addEventListener("click",useHint);
+$("skipBtn").addEventListener("click",skip);
+$("soundBtn").addEventListener("click",()=>{soundOn=!soundOn;$("soundBtn").textContent=soundOn?"🔊 Sound on":"🔇 Sound off";if(soundOn)tone(700,.08)});
+$("startBtn").addEventListener("click",()=>begin(false));
+$("continueBtn").addEventListener("click",()=>begin(true));
+$("levelsBtn").addEventListener("click",()=>{buildLevels();$("levelsScreen").classList.add("show")});
+$("badgesBtn").addEventListener("click",()=>{buildBadges();$("badgesScreen").classList.add("show")});
+$("closeBadges").addEventListener("click",()=>$("badgesScreen").classList.remove("show"));
+$("closeLevels").addEventListener("click",()=>$("levelsScreen").classList.remove("show"));
+$("retryBtn").addEventListener("click",()=>begin(false));
+$("endLevelsBtn").addEventListener("click",()=>{$("endScreen").classList.remove("show");buildLevels();$("levelsScreen").classList.add("show")});
+$("answer").addEventListener("keydown",e=>{if(e.key==="Escape")$("answer").blur()});
+$("welcomeBest").textContent="Personal best: "+bestScore;
+$("best").textContent=bestScore;
+</script>
+</body>
+</html>
